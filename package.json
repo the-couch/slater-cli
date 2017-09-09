@@ -1,15 +1,12 @@
 {
-  "name": "primers-cli",
+  "name": "slater-cli",
   "version": "0.0.1",
   "description": "",
   "main": "index.js",
   "bin": {
-    "primers": "./index.js"
+    "slater": "./index.js"
   },
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "estrattonbailey",
+  "author": "the-couch",
   "license": "MIT",
   "dependencies": {
     "@shopify/themekit": "^0.6.12",
