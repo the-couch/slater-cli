@@ -1,13 +1,16 @@
 {
-  "name": "slater-cli",
+  "name": "@slater/cli",
   "version": "0.0.1",
   "description": "",
   "main": "index.js",
   "bin": {
     "slater": "./index.js"
   },
-  "author": "the-couch",
+  "author": "slater",
   "license": "MIT",
+  "scripts": {
+    "publish": "npm publish --access public"
+  },
   "dependencies": {
     "@shopify/themekit": "^0.6.12",
     "babel-core": "^6.25.0",

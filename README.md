@@ -1,5 +1,9 @@
 # @slater/cli
 
+```bash
+npm i @slater/cli -g
+```
+
 ## Usage
 A slater theme needs two things:
 1. standard `config.yml`
