@@ -28,6 +28,8 @@
     "commander": "^2.11.0",
     "deepmerge": "^1.5.1",
     "express": "^4.15.4",
+    "function-rate-limit": "^1.1.0",
+    "gitignore-parser": "0.0.2",
     "js-yaml": "^3.9.1",
     "lodash-webpack-plugin": "^0.11.4",
     "node-watch": "^0.5.5",
