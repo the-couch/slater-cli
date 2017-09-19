@@ -1,6 +1,10 @@
 # @slater/cli
 
 ```bash
+# usage from npm scripts, recommended
+npm i @slater/cli --save-dev
+
+# globally
 npm i @slater/cli -g
 ```
 
