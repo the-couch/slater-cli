@@ -11,6 +11,7 @@ const colors = require('colors')
 program
   .version(pkg.version)
   .option('-w --watch', 'recursively watch src directory')
+  .option('-b --build', 'build the theme assets')
   .option('-e --env [env]', 'specify an environment')
   .option('-d, --deploy [env]', 'deploy a theme')
   .option('--debug', 'enable available debugging')
@@ -32,6 +33,8 @@ process.stdout.write('\x1B[2J\x1B[0f')
  */
 if (program.watch) {
   require('./lib/watch.js')(program, config)
+} else if (program.build) {
+  require('./lib/build.js')(program, config)
 } else if (program.deploy) {
-  require('./lib/deploy.js')(program, config)
+  require('./lib/build.js')(program, config, true)
 }
