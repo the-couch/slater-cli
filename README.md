@@ -1,54 +1,61 @@
 # @slater/cli
+Shopify theme development toolkit.
 
-```bash
-# usage from npm scripts, recommended
+```
 npm i @slater/cli --save-dev
-
-# globally
-npm i @slater/cli -g
 ```
 
-## Usage
-A slater theme needs two things:
-1. standard `config.yml`
-2. a `webpack.config.js` in your root
-
-Files should follow the default directory structure of [Slate](https://github.com/Shopify/slate). We recommend [@slater/theme](https://github.com/the-couch/slater-theme).
-
-During development, replace your Shopify CDN url with a path to your local bundle to enable HMR. This is not currently configurable.
-
-```html
-<body>
-  ...
-  {% comment %} <script src="{{ 'index.js' | asset_url }}" defer="defer"></script> {% endcomment %}
-  <script src="https://unpkg.com/@slater/reload"></script>
-  <script src="https://localhost:3000/index.js"></script>
-</body>
-```
-
-Then just run the commands:
-
+# Usage
+Required project structure.
 ```bash
-# watch theme files and
-# hot reload javascript
-slater -w # or --watch
-
-# build javascript and upload entire theme
-slater -d # or --deploy
-
-# specify an environment, default: development
-slater -e production # or --env
+- package.json
+- src/
+  |- config.yml # standard issue Shopify
+  |- scripts/
+    |- index.js
+  |- layout/
+  |- templates/
+  |- etc...
 ```
 
-You'll also want the [@slater/reload](https://github.com/the-couch/slater-reload) package to listen for file changes and live-reload the remote page. That will look like this:
+### JS
+JavaScript is compiled with [bili](https://github.com/egoist/bili), and supports
+most modern ES6 features.
 
-```html
-<body>
-  ...
-  {% comment %} <script src="{{ 'index.js' | asset_url }}" defer="defer"></script> {% endcomment %}
-  <script src="https://unpkg.com/@slater/reload"></script>
-  <script src="https://localhost:3000/index.js"></script>
-</body>
+### CSS
+CSS is compiled with bili also, via postcss. Just import your root stylesheet
+into your root JavaScript file and you're good to go.
+
+## watch
+```
+slater watch
 ```
 
-MIT
+## build
+Build JavaScript and CSS, copy theme to `/build` directory.
+```
+slater build
+```
+
+## deploy
+Build JavaScript and CSS, copy theme to `/build` directory, push to Shopify.
+```
+slater deploy
+```
+
+## Options
+### `--env`
+Specify a theme from `config.yml`. Defaults to `development`.
+```
+slater deploy --env=production
+```
+
+### `--jsx`
+Specify a JSX pragma. Defalts to `React.createElement`.
+```
+slater deploy --jsx=preact.h
+```
+
+## License
+MIT License
+(c) 2018 The Couch, LLC
