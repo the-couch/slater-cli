@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@shopify/themekit": "^0.6.12",
+    "@slater/themekit": "0.0.1",
     "ansi-colors": "^2.0.5",
     "anymatch": "^2.0.0",
     "bili": "^3.1.2",
@@ -26,6 +27,7 @@
     "postcss-import": "^12.0.0",
     "postcss-nested": "^3.0.0",
     "rollup-plugin-alias": "^1.4.0",
-    "socket.io": "^2.1.1"
+    "socket.io": "^2.1.1",
+    "yaml": "^1.0.0-rc.7"
   }
 }

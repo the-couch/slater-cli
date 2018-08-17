@@ -4,13 +4,14 @@
 const pkg = require('./package.json')
 const path = require('path')
 const fs = require('fs-extra')
-const themekit = require('@shopify/themekit').command
+const themekit = require('@slater/themekit')
 const queue = require('function-rate-limit')
 const c = require('ansi-colors')
 const bili = require('bili')
 const postcss = require('rollup-plugin-postcss')
 const chokidar = require('chokidar')
 const match = require('anymatch')
+const yaml = require('yaml').default
 
 const dir = (...args) => path.join(process.cwd(), ...args)
 
@@ -60,17 +61,16 @@ server.listen(3001)
 /**
  * Clear terminal bc it's prettier
  */
-process.stdout.write('\x1B[2J\x1B[0f')
+// process.stdout.write('\x1B[2J\x1B[0f')
 
-function theme (action, ...args) {
-  return new Promise((res, rej) => {
-    themekit({
-      args: [ action, '--env', env ].concat(args),
-      cwd: dir('/build'),
-      logLevel: deploy || debug || 'error'
-    }, e => e ? rej(e) : res())
-  })
-}
+const themeConfig = yaml.parse(fs.readFileSync(dir('config.yml'), 'utf8'))[env]
+
+const theme = themekit({
+  password: themeConfig.password,
+  store: themeConfig.store,
+  theme_id: themeConfig.theme_id,
+  ignore_files: themeConfig.ignore_files
+})
 
 const tasks = {
   watch () {
@@ -105,6 +105,11 @@ const tasks = {
         })
       })
 
+    theme.upload('templates/index.liquid', dir('build/templates/index.liquid'))
+      .then(res => {
+        console.log(res)
+      })
+
     /**
      * From /build dir
      */
@@ -116,7 +121,7 @@ const tasks = {
       .on('add', p => {
         const pathname = p.split('/build')[1]
 
-        theme('upload', pathname)
+        theme.upload(pathname, p)
           .then(() => {
             io.emit('refresh')
           })
@@ -127,7 +132,7 @@ const tasks = {
       .on('change', p => {
         const pathname = p.split('/build')[1]
 
-        theme('upload', pathname)
+        theme.upload(pathname, p)
           .then(() => {
             io.emit('refresh')
           })
@@ -138,7 +143,7 @@ const tasks = {
       .on('unlink', p => {
         const pathname = p.split('/build')[1]
 
-        theme('remove', pathname)
+        theme.upload(pathname, p)
           .then(() => {
             io.emit('refresh')
           })
@@ -161,7 +166,7 @@ const tasks = {
       input: dir('/src/scripts/index.js'),
       outDir: dir('/build/assets'),
       filename: 'index.js',
-      format: ['iife-min'],
+      format: [ watch ? 'iife' : 'iife-min' ],
       target: 'browser',
       watch: watch,
       banner: watch ? `
@@ -213,7 +218,7 @@ if (watch) {
 } else if (deploy) {
   tasks.copyTheme()
     .then(tasks.compile)
-    .then(() => theme('deploy'))
+    .then(() => theme('replace'))
     .catch(e => {
       console.error(e)
     })
