@@ -17,7 +17,9 @@ const postcss = require('rollup-plugin-postcss')
 const chokidar = require('chokidar')
 const match = require('anymatch')
 const yaml = require('yaml').default
-const socket = require('./lib/socket.js')
+const onExit = require('exit-hook')
+const exit = require('exit')
+const { socket, closeServer } = require('./lib/socket.js')
 const bundler = require('./lib/bundler.js')
 const { log } = require('./lib/util.js')
 
@@ -75,7 +77,7 @@ function compiler (opts = {}) {
           var socket = io(href)
           socket.on('refresh', () => window.location.reload())
         }
-      })('https://localhost:3001');
+      })('https://localhost:3000');
     `,
     compress: opts.compress
   })
@@ -170,6 +172,10 @@ function watchFiles () {
 }
 
 if (watch) {
+  onExit(() => {
+    closeServer()
+  })
+
   copyTheme().then(() => {
     watchFiles()
     compiler().watch()
@@ -181,14 +187,14 @@ if (watch) {
   copyTheme().then(() => {
     compiler({ compress: true }).compile().then(() => {
       log(c.green(`compiled js/css`))
-      process.exit()
+      exit()
     })
   })
 } else if (deploy) {
   copyTheme().then(() => {
     compiler({ compress: true }).compile().then(() => {
       log(c.green(`compiled js/css`))
-      process.exit()
+      exit()
     })
   })
 }
