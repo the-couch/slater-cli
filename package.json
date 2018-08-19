@@ -19,7 +19,7 @@
     "@babel/plugin-transform-react-jsx": "^7.0.0-beta.39",
     "@babel/preset-env": "^7.0.0-beta.39",
     "@babel/preset-react": "^7.0.0-rc.1",
-    "@slater/themekit": "0.0.5",
+    "@slater/themekit": "^0.1.0",
     "ansi-colors": "^2.0.5",
     "anymatch": "^2.0.0",
     "bili": "^3.1.2",
