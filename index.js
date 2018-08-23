@@ -194,7 +194,15 @@ if (watch) {
   copyTheme().then(() => {
     compiler({ compress: true }).compile().then(() => {
       log(c.green(`compiled js/css`))
-      exit()
+      theme.deploy('/build')
+        .then(() => {
+          log(c.green(`deployed to ${env} theme`))
+          exit()
+        })
+        .catch(e => {
+          log(c.red('deploy failed'), e.message || e)
+          exit()
+        })
     })
   })
 }
