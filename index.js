@@ -88,9 +88,13 @@ function copyTheme () {
     filter: (src, dest) => {
       return !/scripts|styles/.test(src)
     }
-  }).then(() => {
-    log(c.green('copied theme to build/'))
   })
+    .then(() => {
+      log(c.green('copied theme to build/'))
+    })
+    .catch(e => {
+      log(c.red('theme copy failed'), e.message || e)
+    })
 }
 
 function watchFiles () {
@@ -180,30 +184,34 @@ if (watch) {
     watchFiles()
     compiler().watch()
       .end(() => {
-        log(c.green(`compiled js/css`))
+        log(c.green(`compiled`))
       })
   })
 } else if (build) {
   copyTheme().then(() => {
-    compiler({ compress: true }).compile().then(() => {
-      log(c.green(`compiled js/css`))
-      exit()
-    })
+    compiler({ compress: true }).compile()
+      .then(() => {
+        log(c.green(`compiled`))
+        exit()
+      })
+      .catch(e => log(c.red('compilation'), e.message || e))
   })
 } else if (deploy) {
   copyTheme().then(() => {
-    compiler({ compress: true }).compile().then(() => {
-      log(c.green(`compiled js/css`))
-      theme.deploy('/build')
-        .then(() => {
-          log(c.green(`deployed to ${env} theme`))
-          exit()
-        })
-        .catch(e => {
-          log(c.red('deploy failed'), e.message || e)
-          exit()
-        })
-    })
+    compiler({ compress: true }).compile()
+      .then(() => {
+        log(c.green(`compiled`))
+        theme.deploy('/build')
+          .then(() => {
+            log(c.green(`deployed to ${env} theme`))
+            exit()
+          })
+          .catch(e => {
+            log(c.red('deploy failed'), e.message || e)
+            exit()
+          })
+      })
+      .catch(e => log(c.red('compilation'), e.message || e))
   })
 }
 
