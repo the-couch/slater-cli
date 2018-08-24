@@ -46,7 +46,7 @@ try {
   ignoredFiles.concat(require('parse-gitignore')(fs.readFileSync(dir('.gitignore'))))
 } catch (e) {}
 
-const themeConfig = yaml.parse(fs.readFileSync(dir('build/config.yml'), 'utf8'))[env]
+const themeConfig = yaml.parse(fs.readFileSync(dir('src/config.yml'), 'utf8'))[env]
 
 const theme = themekit({
   password: themeConfig.password,
