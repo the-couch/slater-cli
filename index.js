@@ -67,7 +67,7 @@ function compiler (opts = {}) {
       scripts: dir('/src/scripts'),
       styles: dir('/src/styles')
     },
-    banner: `
+    banner: watch ? `
       (function (href) {
         const socketio = document.createElement('script')
         socketio.src = 'https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.slim.js'
@@ -78,7 +78,7 @@ function compiler (opts = {}) {
           socket.on('refresh', () => window.location.reload())
         }
       })('https://localhost:3000');
-    `,
+    ` : '',
     compress: opts.compress
   })
 }
