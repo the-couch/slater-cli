@@ -25,13 +25,13 @@ const { log } = require('./lib/util.js')
 
 const {
   _: args,
-  config = 'slater.config.js',
+  // config = 'slater.config.js',
   env = 'development',
   debug,
   ...props
 } = require('minimist')(process.argv.slice(2))
 
-const conf = require(dir(config))
+// const conf = require(dir(config))
 const watch = args[0] === 'watch'
 const build = args[0] === 'build'
 const deploy = args[0] === 'deploy'
