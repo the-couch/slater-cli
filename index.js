@@ -15,7 +15,7 @@ const c = require('ansi-colors')
 const bili = require('bili')
 const postcss = require('rollup-plugin-postcss')
 const chokidar = require('chokidar')
-const match = require('anymatch')
+const mm = require('micromatch')
 const yaml = require('yaml').default
 const onExit = require('exit-hook')
 const exit = require('exit')
@@ -30,6 +30,10 @@ const {
   debug,
   ...props
 } = require('minimist')(process.argv.slice(2))
+
+if (debug) {
+  require('inspector').open()
+}
 
 // const conf = require(dir(config))
 const watch = args[0] === 'watch'
@@ -97,7 +101,14 @@ function copyTheme () {
     })
 }
 
-function watchFiles () {
+function watchFiles (recompile) {
+  function match (p) {
+    if (mm.any(p, ignoredFiles)) {
+      if (mm.contains(p, ['*.css'])) recompile()
+      return true
+    }
+  }
+
   /**
    * From /src dir
    */
@@ -106,7 +117,7 @@ function watchFiles () {
     ignoreInitial: true
   })
     .on('add', p => {
-      if (match(ignoredFiles, p)) return
+      if (match(p)) return
 
       const pathname = p.split('/src')[1]
       const dest = dir('/build', pathname)
@@ -120,7 +131,7 @@ function watchFiles () {
         })
     })
     .on('change', p => {
-      if (match(ignoredFiles, p)) return
+      if (match(p)) return
 
       const pathname = p.split('/src')[1]
       const dest = dir('/build', pathname)
@@ -134,7 +145,7 @@ function watchFiles () {
         })
     })
     .on('unlink', p => {
-      if (match(ignoredFiles, p)) return
+      if (match(p)) return
 
       const pathname = p.split('/src')[1]
 
@@ -181,11 +192,24 @@ if (watch) {
   })
 
   copyTheme().then(() => {
-    watchFiles()
-    compiler().watch()
-      .end(() => {
-        log(c.green(`compiled`))
+    const watcher = compiler().watch().end(() => {
+      log(c.green(`compiled`))
+    })
+
+    watchFiles(function recompile () {
+      watcher.tasks.forEach(task => {
+        const style = task.cache.modules.filter(mod => {
+          if (/\.css/.test(mod.id)) {
+            mod.transformDependencies = [mod.id]
+            return mod
+          }
+        })[0]
+
+        if (style) {
+          task.invalidate(style.id, true)
+        }
       })
+    })
   })
 } else if (build) {
   copyTheme().then(() => {
@@ -207,7 +231,7 @@ if (watch) {
             exit()
           })
           .catch(e => {
-            log(c.red('deploy failed'), e.message || e)
+            log(c.red('deploy failed'), e)
             exit()
           })
       })
