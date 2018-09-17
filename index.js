@@ -37,8 +37,8 @@ if (debug) {
 
 // const conf = require(dir(config))
 const watch = args[0] === 'watch'
-const build = args[0] === 'build'
 const deploy = args[0] === 'deploy'
+const build = args[0] === 'build' || (!watch && !deploy)
 
 const ignoredFiles = [
   '**/scripts/**',
@@ -75,12 +75,12 @@ function compiler (opts = {}) {
       (function (href) {
         const socketio = document.createElement('script')
         socketio.src = 'https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.slim.js'
-        socketio.onload = init
-        document.head.appendChild(socketio)
-        function init () {
+        socketio.onload = function init () {
           var socket = io(href)
+          socket.on('connect', () => console.log('@slater/cli connected'))
           socket.on('refresh', () => window.location.reload())
         }
+        document.head.appendChild(socketio)
       })('https://localhost:3000');
     ` : '',
     compress: opts.compress
