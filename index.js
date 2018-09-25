@@ -23,6 +23,8 @@ const { socket, closeServer } = require('./lib/socket.js')
 const bundler = require('./lib/bundler.js')
 const { log } = require('./lib/util.js')
 
+log(c.gray(`v${pkg.version}`))
+
 const {
   _: args,
   // config = 'slater.config.js',
