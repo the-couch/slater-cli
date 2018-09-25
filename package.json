@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "bin": {
-    "slater-dev": "./index.js"
+    "slater": "./index.js"
   },
   "author": "slater",
   "license": "MIT",
@@ -20,7 +20,7 @@
     "@babel/preset-env": "^7.0.0-beta.39",
     "@babel/preset-react": "^7.0.0-rc.1",
     "@slater/rollup-plugin-postcss": "^1.6.2",
-    "@slater/themekit": "^0.3.0",
+    "@slater/themekit": "^1.0.0",
     "ansi-colors": "^3.0.4",
     "anymatch": "^2.0.0",
     "bili": "^3.1.2",
