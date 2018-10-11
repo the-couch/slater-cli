@@ -42,23 +42,28 @@ const watch = args[0] === 'watch'
 const deploy = args[0] === 'deploy'
 const build = args[0] === 'build' || (!watch && !deploy)
 
-const ignoredFiles = [
+const gitignore = fs.readFileSync(dir('.gitignore'))
+const themeConfig = yaml.parse(fs.readFileSync(dir('src/config.yml'), 'utf8'))[env]
+
+let ignoredFiles = [
   '**/scripts/**',
   '**/styles/**',
   /DS_Store/
 ]
 
-try {
-  ignoredFiles.concat(require('parse-gitignore')(fs.readFileSync(dir('.gitignore'))))
-} catch (e) {}
+if (gitignore) {
+  ignoredFiles = ignoredFiles.concat(require('parse-gitignore')(gitignore))
+}
 
-const themeConfig = yaml.parse(fs.readFileSync(dir('src/config.yml'), 'utf8'))[env]
+if (themeConfig.ignore_files) {
+  ignoredFiles = ignoredFiles.concat(themeConfig.ignore_files)
+}
 
 const theme = themekit({
   password: themeConfig.password,
   store: themeConfig.store,
   theme_id: themeConfig.theme_id,
-  ignore_files: themeConfig.ignore_files
+  ignore_files: ignoredFiles
 })
 
 function dir (...args) {
