@@ -80,12 +80,21 @@ function compiler (opts = {}) {
     },
     banner: watch ? `
       (function (href) {
+        const scrollPos = localStorage.getItem('slater-scroll')
+
+        if (scrollPos) {
+          window.scrollTo(0, scrollPos)
+        }
+
         const socketio = document.createElement('script')
         socketio.src = 'https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.slim.js'
         socketio.onload = function init () {
           var socket = io(href)
           socket.on('connect', () => console.log('@slater/cli connected'))
-          socket.on('refresh', () => window.location.reload())
+          socket.on('refresh', () => {
+            localStorage.setItem('slater-scroll', window.scrollY)
+            window.location.reload()
+          })
         }
         document.head.appendChild(socketio)
       })('https://localhost:3000');
