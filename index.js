@@ -35,7 +35,7 @@ const watch = args[0] === 'watch'
 const deploy = args[0] === 'deploy'
 const build = args[0] === 'build' || (!watch && !deploy)
 const gitignore = fs.readFileSync(join('.gitignore'))
-const userConfig = require(join(configFile))
+const userConfig = fs.existsSync(join(configFile)) ? require(join(configFile)) : {}
 const themeConfig = yaml.parse(fs.readFileSync(join('src/config.yml'), 'utf8'))[env]
 
 let ignoredFiles = [
@@ -152,7 +152,6 @@ function watchFiles () {
         })
     })
     .on('change', p => {
-      console.log(p)
       if (match(p)) return
 
       const pathname = p.split('/src')[1]
