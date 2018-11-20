@@ -59,6 +59,7 @@ const config = Object.assign({
   in: '/src/scripts/index.js',
   outDir:'/build/assets',
   watch,
+  map: watch ? 'inline-cheap-source-map' : false,
   alias: {
     scripts: resolve('/src/scripts'),
     styles: resolve('/src/styles')

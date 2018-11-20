@@ -19,7 +19,7 @@
     "@babel/plugin-transform-react-jsx": "^7.0.0-beta.39",
     "@babel/preset-env": "^7.0.0-beta.39",
     "@babel/preset-react": "^7.0.0-rc.1",
-    "@friendsof/spaghetti": "^0.1.5",
+    "@friendsof/spaghetti": "^1.0.0",
     "@slater/rollup-plugin-postcss": "^1.6.2",
     "@slater/themekit": "^1.0.2",
     "ansi-colors": "^3.0.4",
