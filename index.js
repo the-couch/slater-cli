@@ -77,6 +77,7 @@ const config = Object.assign({
         const socketio = document.createElement('script')
         socketio.src = 'https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.slim.js'
         socketio.onload = function init () {
+          var disconnected = false
           var socket = io('https://localhost:3000', {
             reconnectionAttempts: 3
           })
@@ -85,7 +86,11 @@ const config = Object.assign({
             ls.setItem('slater-scroll', global.scrollY)
             global.location.reload()
           })
+          socket.on('disconnect', () => {
+            disconnected = true
+          })
           socket.on('reconnect_failed', e => {
+            if (disconnected) return
             console.error("@slater/cli - Connection to the update server failed. Please visit https://localhost:3000 in your browser to trust the certificate. Then, refresh this page.")
           })
         }
@@ -213,6 +218,7 @@ if (watch) {
 
     onExit(() => {
       watchers.map(w => w.close())
+      // socket.emit('close')
       closeServer()
     })
 
