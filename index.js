@@ -64,25 +64,34 @@ const config = Object.assign({
     styles: resolve('/src/styles')
   },
   banner: watch ? `
-    (function (href) {
-      const scrollPos = localStorage.getItem('slater-scroll')
+    (function (global) {
+      try {
+        const ls = global.localStorage
 
-      if (scrollPos) {
-        window.scrollTo(0, scrollPos)
-      }
+        const scrollPos = ls.getItem('slater-scroll')
 
-      const socketio = document.createElement('script')
-      socketio.src = 'https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.slim.js'
-      socketio.onload = function init () {
-        var socket = io(href)
-        socket.on('connect', () => console.log('@slater/cli connected'))
-        socket.on('refresh', () => {
-          localStorage.setItem('slater-scroll', window.scrollY)
-          window.location.reload()
-        })
-      }
-      document.head.appendChild(socketio)
-    })('https://localhost:3000');
+        if (scrollPos) {
+          global.scrollTo(0, scrollPos)
+        }
+
+        const socketio = document.createElement('script')
+        socketio.src = 'https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.slim.js'
+        socketio.onload = function init () {
+          var socket = io('https://localhost:3000', {
+            reconnectionAttempts: 3
+          })
+          socket.on('connect', () => console.log('@slater/cli connected'))
+          socket.on('refresh', () => {
+            ls.setItem('slater-scroll', global.scrollY)
+            global.location.reload()
+          })
+          socket.on('reconnect_failed', e => {
+            console.error("@slater/cli - Connection to the update server failed. Please visit https://localhost:3000 in your browser to trust the certificate. Then, refresh this page.")
+          })
+        }
+        document.head.appendChild(socketio)
+      } catch (e) {}
+    })(this);
   ` : false
 }, userConfig)
 
@@ -229,12 +238,14 @@ if (watch) {
           c.green(`compiled`),
           `in ${stats.duration}ms`
         ]))
+        exit()
       })
       .error(err => {
         log(c => ([
           c.red(`compilation`),
           err ? err.message || err : ''
         ]))
+        exit()
       })
   })
 } else if (deploy) {
