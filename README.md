@@ -67,10 +67,20 @@ Specify a theme from `config.yml`. Defaults to `development`.
 slater deploy --env=production
 ```
 
-### `--jsx`
-Specify a JSX pragma. Defalts to `React.createElement`.
-```
-slater deploy --jsx=preact.h
+### Config File
+`slater` also supports a `slater.config.js` as well, which supports all the same
+options as
+[@friendsof/spaghetti](https://github.com/the-couch/spaghetti#config).
+
+```javascript
+// slater.config.js
+module.exports = {
+  jsx: 'preact.h',
+  map: 'inline-cheap-source-map',
+  alias: {
+    foo: './bar'
+  }
+}
 ```
 
 ## License
