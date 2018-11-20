@@ -1,11 +1,6 @@
 #! /usr/bin/env node
 'use strict'
 
-/**
- * Clear terminal bc it's prettier
- */
-process.stdout.write('\x1B[2J\x1B[0f')
-
 const pkg = require('./package.json')
 const path = require('path')
 const fs = require('fs-extra')
@@ -19,45 +14,39 @@ const mm = require('micromatch')
 const yaml = require('yaml').default
 const onExit = require('exit-hook')
 const exit = require('exit')
+const spaghetti = require('@friendsof/spaghetti')
 const { socket, closeServer } = require('./lib/socket.js')
 const bundler = require('./lib/bundler.js')
-const { log } = require('./lib/util.js')
+const { log, join, resolve } = require('./lib/util.js')
 
 log(c.gray(`v${pkg.version}`))
 
 const {
   _: args,
-  // config = 'slater.config.js',
+  config: configFile = 'slater.config.js',
   env = 'development',
   debug,
   ...props
 } = require('minimist')(process.argv.slice(2))
 
-if (debug) {
-  require('inspector').open()
-}
+if (debug) require('inspector').open()
 
-// const conf = require(dir(config))
 const watch = args[0] === 'watch'
 const deploy = args[0] === 'deploy'
 const build = args[0] === 'build' || (!watch && !deploy)
-
-const gitignore = fs.readFileSync(dir('.gitignore'))
-const themeConfig = yaml.parse(fs.readFileSync(dir('src/config.yml'), 'utf8'))[env]
+const gitignore = fs.readFileSync(join('.gitignore'))
+const userConfig = require(join(configFile))
+const themeConfig = yaml.parse(fs.readFileSync(join('src/config.yml'), 'utf8'))[env]
 
 let ignoredFiles = [
   '**/scripts/**',
   '**/styles/**',
   /DS_Store/
-]
-
-if (gitignore) {
-  ignoredFiles = ignoredFiles.concat(require('parse-gitignore')(gitignore))
-}
-
-if (themeConfig.ignore_files) {
-  ignoredFiles = ignoredFiles.concat(themeConfig.ignore_files)
-}
+].concat(
+  themeConfig.ignore_files || []
+).concat(
+  gitignore ? require('parse-gitignore')(gitignore) : []
+)
 
 const theme = themekit({
   password: themeConfig.password,
@@ -66,45 +55,45 @@ const theme = themekit({
   ignore_files: ignoredFiles
 })
 
-function dir (...args) {
-  return path.join(process.cwd(), ...args)
-}
+const config = Object.assign({
+  in: '/src/scripts/index.js',
+  outDir:'/build/assets',
+  watch,
+  alias: {
+    scripts: resolve('/src/scripts'),
+    styles: resolve('/src/styles')
+  },
+  banner: watch ? `
+    (function (href) {
+      const scrollPos = localStorage.getItem('slater-scroll')
 
-function compiler (opts = {}) {
-  return bundler({
-    input: dir('/src/scripts/index.js'),
-    output: dir('/build/assets/index.js'),
-    alias: {
-      scripts: dir('/src/scripts'),
-      styles: dir('/src/styles')
-    },
-    banner: watch ? `
-      (function (href) {
-        const scrollPos = localStorage.getItem('slater-scroll')
+      if (scrollPos) {
+        window.scrollTo(0, scrollPos)
+      }
 
-        if (scrollPos) {
-          window.scrollTo(0, scrollPos)
-        }
+      const socketio = document.createElement('script')
+      socketio.src = 'https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.slim.js'
+      socketio.onload = function init () {
+        var socket = io(href)
+        socket.on('connect', () => console.log('@slater/cli connected'))
+        socket.on('refresh', () => {
+          localStorage.setItem('slater-scroll', window.scrollY)
+          window.location.reload()
+        })
+      }
+      document.head.appendChild(socketio)
+    })('https://localhost:3000');
+  ` : false
+}, userConfig)
 
-        const socketio = document.createElement('script')
-        socketio.src = 'https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.slim.js'
-        socketio.onload = function init () {
-          var socket = io(href)
-          socket.on('connect', () => console.log('@slater/cli connected'))
-          socket.on('refresh', () => {
-            localStorage.setItem('slater-scroll', window.scrollY)
-            window.location.reload()
-          })
-        }
-        document.head.appendChild(socketio)
-      })('https://localhost:3000');
-    ` : '',
-    compress: opts.compress
-  })
-}
+config.in = join(config.in)
+config.outDir = join(config.outDir)
+config.filename = config.filename || path.basename(config.in, '.js')
+
+const bundle = spaghetti(config)
 
 function copyTheme () {
-  return fs.copy(dir('src'), dir('build'), {
+  return fs.copy(join('src'), join('build'), {
     filter: (src, dest) => {
       return !/scripts|styles/.test(src)
     }
@@ -117,26 +106,27 @@ function copyTheme () {
     })
 }
 
-function watchFiles (recompile) {
+function watchFiles () {
   function match (p) {
-    if (mm.any(p, ignoredFiles)) {
-      if (mm.contains(p, ['*.css'])) recompile()
-      return true
-    }
+    return mm.any(p, ignoredFiles)
   }
 
   /**
    * From /src dir
    */
-  chokidar.watch(dir('/src'), {
+  const watchSrc = chokidar.watch(join('/src'), {
     persistent: true,
-    ignoreInitial: true
+    ignoreInitial: true,
+    ignore: [
+      '/scripts/**/*.js',
+      '/styles/**/*.css'
+    ]
   })
     .on('add', p => {
       if (match(p)) return
 
       const pathname = p.split('/src')[1]
-      const dest = dir('/build', pathname)
+      const dest = join('/build', pathname)
 
       fs.copy(p, dest)
         .catch(e => {
@@ -147,10 +137,11 @@ function watchFiles (recompile) {
         })
     })
     .on('change', p => {
+      console.log(p)
       if (match(p)) return
 
       const pathname = p.split('/src')[1]
-      const dest = dir('/build', pathname)
+      const dest = join('/build', pathname)
 
       fs.copy(p, dest)
         .catch(e => {
@@ -165,7 +156,7 @@ function watchFiles (recompile) {
 
       const pathname = p.split('/src')[1]
 
-      fs.remove(dir('/build', pathname))
+      fs.remove(join('/build', pathname))
         .catch(e => {
           log(
             c.red(`removing ${pathname} failed`),
@@ -177,7 +168,7 @@ function watchFiles (recompile) {
   /**
    * From /build dir
    */
-  chokidar.watch(dir('/build'), {
+  const watchBuild = chokidar.watch(join('/build'), {
     ignore: /DS_Store/,
     persistent: true,
     ignoreInitial: true
@@ -200,47 +191,61 @@ function watchFiles (recompile) {
       theme.remove(pathname)
         .then(() => socket.emit('refresh'))
     })
+
+  return [
+    watchSrc,
+    watchBuild
+  ]
 }
 
 if (watch) {
-  onExit(() => {
-    closeServer()
-  })
-
   copyTheme().then(() => {
-    const watcher = compiler().watch().end(() => {
-      log(c.green(`compiled`))
+    const watchers = watchFiles()
+
+    onExit(() => {
+      watchers.map(w => w.close())
+      closeServer()
     })
 
-    watchFiles(function recompile () {
-      watcher.tasks.forEach(task => {
-        const style = task.cache.modules.filter(mod => {
-          if (/\.css/.test(mod.id)) {
-            mod.transformDependencies = [mod.id]
-            return mod
-          }
-        })[0]
-
-        if (style) {
-          task.invalidate(style.id, true)
-        }
+    bundle.watch()
+      .end(stats => {
+        log(c => ([
+          c.green(`compiled`),
+          `in ${stats.duration}ms`
+        ]))
       })
-    })
+      .error(err => {
+        log(c => ([
+          c.red(`compilation`),
+          err ? err.message || err : ''
+        ]))
+      })
   })
 } else if (build) {
   copyTheme().then(() => {
-    compiler({ compress: true }).compile()
-      .then(() => {
-        log(c.green(`compiled`))
-        exit()
+    bundle.build()
+      .end(stats => {
+        log(c => ([
+          c.green(`compiled`),
+          `in ${stats.duration}ms`
+        ]))
       })
-      .catch(e => log(c.red('compilation'), e.message || e))
+      .error(err => {
+        log(c => ([
+          c.red(`compilation`),
+          err ? err.message || err : ''
+        ]))
+      })
   })
 } else if (deploy) {
   copyTheme().then(() => {
-    compiler({ compress: true }).compile()
-      .then(() => {
-        log(c.green(`compiled`))
+    bundle.build()
+      .end(stats => {
+        log(c => ([
+          c.green(`compiled`),
+          `in ${stats.duration}ms`
+        ]))
+
         theme.deploy('/build')
           .then(() => {
             log(c.green(`deployed to ${env} theme`))
@@ -251,7 +256,12 @@ if (watch) {
             exit()
           })
       })
-      .catch(e => log(c.red('compilation'), e.message || e))
+      .error(err => {
+        log(c => ([
+          c.red(`compilation`),
+          err ? err.message || err : ''
+        ]))
+      })
   })
 }
 
